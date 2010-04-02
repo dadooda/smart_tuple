@@ -16,7 +16,7 @@ SmartTuple is suitable for use with Ruby on Rails (ActiveRecord) and other Ruby 
 Setup
 -----
 
-    script/plugin install git://github.com/dadooda/smart_tuple
+    script/plugin install git://github.com/dadooda/smart_tuple.git
 
 
 Tutorial

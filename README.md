@@ -111,7 +111,7 @@ From `params` perspective that's something like:
     params[:max_price] = 300                        # Can be blank.
     params[:colors] = ["Black", "Silver", "Pink"]   # Can be blank.
 
-Quite obvious is that supplied values for brands and colors should be OR'ed. We're now facing the task of creating a "sub-tuple", e.g. to match brand, and then merge this sub-tuple into main tuple. Doing it straight is something like:
+Quite obvious is that supplied values for brands and colors should be OR'ed. We're now facing the task of creating a "sub-tuple", e.g. to match brand, and then merging this sub-tuple into main tuple. Doing it straight is something like:
 
     tup = SmartTuple.new(" AND ")
 

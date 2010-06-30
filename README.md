@@ -84,8 +84,6 @@ Let's build a tuple:
 
 The above code shows that we can construct ready-made tuples with a single expression, using `+` operator. Also, if a condition is an equality test, we can use Hash notation: `{:brand => params[:brand]}`.
 
-> NOTE: I personally prefer not to use Hash notation for conditions unless I have a good reason to. However, it's up to your preference.
-
 A quick look at `params` and `:conditions`, again:
 
     p: {:brand=>"Nokia"}

@@ -1,7 +1,7 @@
 
 SmartTuple: A Simple Yet Smart SQL Conditions Builder
 =====================================================
- 
+
 
 Introduction
 ------------

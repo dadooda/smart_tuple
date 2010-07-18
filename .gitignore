@@ -10,4 +10,6 @@
 .ref*/
 
 # Project-specific.
-dev/
+/dev/
+/pkg/
+README.html

@@ -6,9 +6,7 @@ SmartTuple: A Simple Yet Smart SQL Conditions Builder
 Introduction
 ------------
 
-Sometimes we need to build SQL WHERE statements which are compound or conditional by nature, e.g. ones used by search forms.
-
-SmartTuple simplifies this task by letting us build statements of virtually unlimited complexity out of smaller ones.
+Sometimes we need to build SQL WHERE statements which are compound or conditional by nature. SmartTuple simplifies this task by letting us build statements of virtually unlimited complexity out of smaller ones.
 
 SmartTuple is suitable for use with Ruby on Rails (ActiveRecord) and other Ruby frameworks and ORMs.
 
@@ -16,13 +14,30 @@ SmartTuple is suitable for use with Ruby on Rails (ActiveRecord) and other Ruby 
 Setup
 -----
 
-    script/plugin install git://github.com/dadooda/smart_tuple.git
+    gem install smart_tuple
+
+In your app's `config/environment.rb` do a:
+
+    config.gem "smart_tuple"
+
+
+Kickstart Demo
+--------------
+
+    tup = SmartTuple.new(" AND ")
+    tup << {:brand => params[:brand]} if params[:brand].present?
+    tup << ["min_price >= ?", params[:min_price]] if params[:min_price].present?
+    tup << ["max_price <= ?", params[:max_price]] if params[:max_price].present?
+
+    @phones = Phone.find(:all, :conditions => tup.compile)
+
+There's a number of ways you can use SmartTuple depending on the situation. They are covered in the tutorial below.
 
 
 Tutorial
 --------
 
-Suppose we've got a mobile phone catalog with a simple form which lets our users search through catalog. We are starting with a price filter of two values: `min_price` and `max_price`, both optional.
+Suppose we've got a mobile phone catalog with a search form. We are starting with a price filter of two values: `min_price` and `max_price`, both optional.
 
 Filter logic:
 
@@ -171,7 +186,7 @@ Here's a brief cheatsheet, which outlines main SmartTuple features.
     # Another SmartTuple.
     tup << other_tuple
 
-    # String. Generally NOT recommended.
+    # String.
     tup << "brand IS NULL"
 
 Appending empty or blank (where appropriate) statements has no effect on the receiver:
@@ -213,19 +228,19 @@ _This chapter still has to be written._
 
 ### Clearing ###
 
-If for some reason you want to put tuple into its initial state, do a:
+To put tuple into its initial state, do a:
 
     tup.clear
 
 
 ### Compiling ###
 
-_Compiling_ is converting the tuple into something suitable for use as `:conditions` of an ActiveRecord call.
+Compiling is converting the tuple into something suitable for use as `:conditions` of an ActiveRecord call.
 
 It's as straight as:
 
     tup.compile
-    tup.to_a        # An alias.
+    tup.to_a        # An alias, does the same.
 
     # Go fetch!
     Phone.find(:all, :conditions => tup.compile)

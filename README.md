@@ -14,7 +14,8 @@ SmartTuple is suitable for use with Ruby on Rails (ActiveRecord) and other Ruby 
 Setup
 -----
 
-    gem install smart_tuple
+    $ gem sources --add http://rubygems.org
+    $ gem install smart_tuple
 
 In your app's `config/environment.rb` do a:
 

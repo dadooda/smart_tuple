@@ -164,9 +164,9 @@ describe (klass = SmartTuple) do
 
   #--------------------------------------- Method tests
 
-  # NOTE: Alphabetical order, except for #initialize.
+  # NOTE: Alphabetical order, except for #new.
 
-  describe "#initialize" do
+  describe "#new" do
     it "requires an argument" do
       Proc.new do
         klass.new
@@ -176,7 +176,7 @@ describe (klass = SmartTuple) do
         klass.new(" AND ")
       end.should_not raise_error
     end
-  end # #initialize
+  end # #new
 
   describe "#+" do
     it "returns a copy" do

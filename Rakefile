@@ -12,7 +12,7 @@ begin
     gem.homepage = "http://github.com/dadooda/smart_tuple"
     gem.authors = ["Alex Fortuna"]
     gem.files = FileList[
-      "[A-Z]*.*",
+      "[A-Z]*",
       "*.gemspec",
       "generators/**/*",
       "lib/**/*.rb",

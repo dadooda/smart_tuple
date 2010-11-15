@@ -277,3 +277,5 @@ Feedback
 --------
 
 Send bug reports, suggestions and criticisms through [project's page on GitHub](http://github.com/dadooda/smart_tuple).
+
+Licensed under the MIT License.

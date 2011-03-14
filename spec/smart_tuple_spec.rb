@@ -188,6 +188,7 @@ describe (klass = SmartTuple) do
     end
   end # #+
 
+  # Most tests are here, since arg conversion is performed right in `<<`.
   describe "#<<" do
     it "ignores nil/empty/blank objects" do
       objs = []
@@ -208,6 +209,14 @@ describe (klass = SmartTuple) do
 
     it "returns self" do
       (r << ["is_male = ?", true]).should eql r
+    end
+
+    it "supports IS NULL for Hash" do
+      r << {:kk => nil}
+      r.compile.should == ["kk IS NULL"]
+
+      r << {:mkk => 10}
+      r.compile.should == ["kk IS NULL AND mkk = ?", 10]
     end
 
     it "supports chaining" do

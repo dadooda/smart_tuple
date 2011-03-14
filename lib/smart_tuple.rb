@@ -75,8 +75,13 @@ class SmartTuple
       end
     elsif sub.is_a? Hash
       sub.each do |k, v|
-        @statements << "#{k} = ?"
-        @args << v
+        if v.nil?
+          # NOTE: AR supports it for hashes only. ["kk = ?", nil] will not be converted.
+          @statements << "#{k} IS NULL"
+        else
+          @statements << "#{k} = ?"
+          @args << v
+        end
       end
     elsif sub.is_a? self.class
       # NOTE: If sub is empty, the execution won't get here.

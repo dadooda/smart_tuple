@@ -1,4 +1,5 @@
 require "rake/rdoctask"
+require "yaml"
 
 GEM_NAME = "smart_tuple"
 
@@ -14,9 +15,9 @@ begin
     gem.files = FileList[
       "[A-Z]*",
       "*.gemspec",
-      "generators/**/*",
-      "lib/**/*.rb",
       "init.rb",
+      "lib/**/*.rb",
+      "spec/**/*.rb",
     ]
   end
 rescue LoadError
@@ -26,13 +27,22 @@ end
 desc "Rebuild gemspec and package"
 task :rebuild => [:gemspec, :build]
 
-desc "Push (publish) gem to RubyGems (aka Gemcutter)"
-task :push => :rebuild do
-  # Yet found no way to ask Jeweler forge a complete version string for us.
+desc "Push (publish) gem to RubyGems.org"
+task :push do
+  # NOTE: Yet found no way to ask Jeweler forge a complete version string for us.
   vh = YAML.load(File.read("VERSION.yml"))
-  version = [vh[:major], vh[:minor], vh[:patch]].join(".")
-  pkgfile = File.join("pkg", [GEM_NAME, "-", version, ".gem"].to_s)
-  system("gem", "push", pkgfile)
+  version = [vh[:major], vh[:minor], vh[:patch], vh[:build]].compact.join(".")
+  pkgfile = File.join("pkg", "#{GEM_NAME}-#{version}.gem")
+  Kernel.system("gem", "push", pkgfile)
+end
+
+desc "Generate RDoc documentation"
+Rake::RDocTask.new(:rdoc) do |rdoc|
+  rdoc.rdoc_dir = "doc"
+  rdoc.title    = "SmartTuple"
+  #rdoc.options << "--line-numbers"
+  #rdoc.options << "--inline-source"
+  rdoc.rdoc_files.include("lib/**/*.rb")
 end
 
 desc "Compile README preview"

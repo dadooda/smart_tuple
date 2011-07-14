@@ -6,20 +6,38 @@ SmartTuple: A Simple Yet Smart SQL Conditions Builder
 Introduction
 ------------
 
-Sometimes we need to build SQL WHERE statements which are compound or conditional by nature. SmartTuple simplifies this task by letting us build statements of virtually unlimited complexity out of smaller ones.
+Sometimes we need to build SQL `WHERE` statements which are compound or conditional by nature. **SmartTuple** simplifies this task by letting us build statements of virtually unlimited complexity out of smaller ones.
 
 SmartTuple is suitable for use with Ruby on Rails (ActiveRecord) and other Ruby frameworks and ORMs.
 
 
-Setup
------
+Setup (Rails 3)
+---------------
 
-    $ gem sources --add http://rubygems.org
+In your app's `Gemfile`, add:
+
+    gem "smart_tuple"
+
+To install the gem with RDoc/ri documentation, do a:
+
     $ gem install smart_tuple
+
+Otherwise, do a `bundle install`.
+
+
+Setup (Rails 2)
+---------------
 
 In your app's `config/environment.rb` do a:
 
     config.gem "smart_tuple"
+
+To install the gem, do a:
+
+    $ gem sources --add http://rubygems.org
+    $ gem install smart_tuple
+
+, or use `rake gems:install`.
 
 
 Kickstart Demo
@@ -32,7 +50,7 @@ Kickstart Demo
 
     @phones = Phone.find(:all, :conditions => tup.compile)
 
-There's a number of ways you can use SmartTuple depending on the situation. They are covered in the tutorial below.
+There's a number of ways you can use SmartTuple. Some of them is covered in the tutorial below.
 
 
 Tutorial
@@ -151,6 +169,10 @@ The final query:
 
 > NOTE: In the above sample I've used `Array#sum` (available in ActiveSupport) instead of `+` to add statements to the tuple. I prefer to write it like this since it allows to comment and swap lines without breaking the syntax.
 
+> NOTE: Recommended Rails 3 usage is:
+>
+>     Phone.where(...)      # Pass a compiled SmartTuple object in place of `...`.
+
 Checking out `params` and `:conditions`:
 
     p: {:brands=>["Nokia"], :max_price=>300}
@@ -172,7 +194,7 @@ That's the end of our tutorial. Hope now you've got an idea of what SmartTuple i
 API Summary
 -----------
 
-Here's a brief cheatsheet, which outlines main SmartTuple features.
+Here's a brief cheatsheet, which outlines the main SmartTuple features.
 
 ### Appending Statements ###
 
@@ -187,8 +209,8 @@ Here's a brief cheatsheet, which outlines main SmartTuple features.
     # Another SmartTuple.
     tup << other_tuple
 
-    # String.
-    tup << "brand IS NULL"
+    # String. Generally NOT recommended.
+    tup << "min_price >= 75"
 
 Appending empty or blank (where appropriate) statements has no effect on the receiver:
 
@@ -244,7 +266,8 @@ It's as straight as:
     tup.to_a        # An alias, does the same.
 
     # Go fetch!
-    Phone.find(:all, :conditions => tup.compile)
+    Phone.find(:all, :conditions => tup.compile)    # Rails 2
+    Phone.where(tup.compile)                        # Rails 3
 
 
 ### Contents and Size ###

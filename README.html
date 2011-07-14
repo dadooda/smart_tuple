@@ -1,0 +1,323 @@
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+  <link href="dev/github.css" rel="stylesheet" type="text/css" />
+</head>
+
+<h1 id="smarttuple-a-simple-yet-smart-sql-conditions-builder">SmartTuple: A Simple Yet Smart SQL Conditions Builder</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Sometimes we need to build SQL <code>WHERE</code> statements which are compound or conditional by nature. <strong>SmartTuple</strong> simplifies this task by letting us build statements of virtually unlimited complexity out of smaller ones.</p>
+
+<p>SmartTuple is suitable for use with Ruby on Rails (ActiveRecord) and other Ruby frameworks and ORMs.</p>
+
+<h2 id="setup-rails-3">Setup (Rails 3)</h2>
+
+<p>In your app’s <code>Gemfile</code>, add:</p>
+
+<pre><code>gem "smart_tuple"
+</code></pre>
+
+<p>To install the gem with RDoc/ri documentation, do a:</p>
+
+<pre><code>$ gem install smart_tuple
+</code></pre>
+
+<p>Otherwise, do a <code>bundle install</code>.</p>
+
+<h2 id="setup-rails-2">Setup (Rails 2)</h2>
+
+<p>In your app’s <code>config/environment.rb</code> do a:</p>
+
+<pre><code>config.gem "smart_tuple"
+</code></pre>
+
+<p>To install the gem, do a:</p>
+
+<pre><code>$ gem sources --add http://rubygems.org
+$ gem install smart_tuple
+</code></pre>
+
+<p>, or use <code>rake gems:install</code>.</p>
+
+<h2 id="kickstart-demo">Kickstart Demo</h2>
+
+<pre><code>tup = SmartTuple.new(" AND ")
+tup &lt;&lt; {:brand =&gt; params[:brand]} if params[:brand].present?
+tup &lt;&lt; ["min_price &gt;= ?", params[:min_price]] if params[:min_price].present?
+tup &lt;&lt; ["max_price &lt;= ?", params[:max_price]] if params[:max_price].present?
+
+@phones = Phone.find(:all, :conditions =&gt; tup.compile)
+</code></pre>
+
+<p>There’s a number of ways you can use SmartTuple. Some of them is covered in the tutorial below.</p>
+
+<h2 id="tutorial">Tutorial</h2>
+
+<p>Suppose we’ve got a mobile phone catalog with a search form. We are starting with a price filter of two values: <code>min_price</code> and <code>max_price</code>, both optional.</p>
+
+<p>Filter logic:</p>
+
+<ul>
+  <li>If the user hasn’t input anything, the filter has no conditions (allows any record).</li>
+  <li>If the user has input <code>min_price</code>, it’s used in filter condition.</li>
+  <li>If the user has input <code>max_price</code>, it’s used in filter condition.</li>
+  <li>If the user has input <code>min_price</code> and <code>max_price</code>, they both are used in filter condition.</li>
+</ul>
+
+<p>Suppose the HTML form passed to a controller results in a <code>params</code> hash:</p>
+
+<pre><code>params[:min_price] = 100    # Can be blank.
+params[:max_price] = 300    # Can be blank.
+</code></pre>
+
+<p>Now let’s write condition-building code:</p>
+
+<pre><code># Start by creating a tuple whose statements are glued with " AND ".
+tup = SmartTuple.new(" AND ")
+
+# If min_price is not blank, append its statement.
+if params[:min_price].present?
+  tup &lt;&lt; ["min_price &gt;= ?", params[:min_price]]
+end
+
+# Same for max_price.
+if params[:max_price].present?
+  tup &lt;&lt; ["max_price &lt;= ?", params[:max_price]]
+end
+
+# Finally, fire up the query.
+@phones = Phone.find(:all, {:conditions =&gt; tup.compile})
+</code></pre>
+
+<p>That’s basically it. Now let’s see how different <code>params</code> values affect the resulting <code>:conditions</code> value. Labelled <strong>p</strong> and <strong>c</strong> in this and following listings:</p>
+
+<pre><code>p: {}
+c: []
+
+p: {:max_price=&gt;300}
+c: ["max_price &lt;= ?", 300]
+
+p: {:min_price=&gt;100, :max_price=&gt;300}
+c: ["min_price &gt;= ? AND max_price &lt;= ?", 100, 300]
+</code></pre>
+
+<h3 id="plus-another-condition">Plus Another Condition</h3>
+
+<p>Let’s make things a bit more user-friendly. Let user filter phones by brand. We do it by adding another field, let’s call it <code>brand</code>, bearing a straight string value (that’s just a simple tutorial, remember?).</p>
+
+<p>Our <code>params</code> now becomes something like:</p>
+
+<pre><code>params[:brand] = "Nokia"    # Can be blank.
+params[:min_price] = 100    # Can be blank.
+params[:max_price] = 300    # Can be blank.
+</code></pre>
+
+<p>Let’s build a tuple:</p>
+
+<pre><code>tup = SmartTuple.new(" AND ") +
+  ({:brand =&gt; params[:brand]} if params[:brand].present?) +
+  (["min_price &gt;= ?", params[:min_price]] if params[:min_price].present?) +
+  (["max_price &lt;= ?", params[:max_price]] if params[:max_price].present?)
+</code></pre>
+
+<p>The above code shows that we can construct ready-made tuples with a single expression, using <code>+</code> operator. Also, if a condition is an equality test, we can use Hash notation: <code>{:brand =&gt; params[:brand]}</code>.</p>
+
+<p>A quick look at <code>params</code> and <code>:conditions</code>, again:</p>
+
+<pre><code>p: {:brand=&gt;"Nokia"}
+c: ["brand = ?", "Nokia"]
+
+p: {:brand=&gt;"Nokia", :max_price=&gt;300}
+c: ["brand = ? AND max_price &lt;= ?", "Nokia", 300]
+
+p: {:brand=&gt;"Nokia", :min_price=&gt;100, :max_price=&gt;300}
+c: ["brand = ? AND min_price &gt;= ? AND max_price &lt;= ?", "Nokia", 100, 300]
+</code></pre>
+
+<h3 id="we-want-more">We Want More!</h3>
+
+<p>Since we now see how easy it’s to build compound conditions, we decide to further extend our search form. Now we want to:</p>
+
+<ul>
+  <li>Let user specify more than 1 brand.</li>
+  <li>Let user specify a selection of colors.</li>
+</ul>
+
+<p>From <code>params</code> perspective that’s something like:</p>
+
+<pre><code>params[:brands] = ["Nokia", "Motorola"]         # Can be blank.
+params[:min_price] = 100                        # Can be blank.
+params[:max_price] = 300                        # Can be blank.
+params[:colors] = ["Black", "Silver", "Pink"]   # Can be blank.
+</code></pre>
+
+<p>Quite obvious is that supplied values for brands and colors should be OR’ed. We’re now facing the task of creating a “sub-tuple”, e.g. to match brand, and then merging this sub-tuple into main tuple. Doing it straight is something like:</p>
+
+<pre><code>tup = SmartTuple.new(" AND ")
+
+if params[:brands].present?
+  subtup = SmartTuple.new(" OR ")
+  params[:brands].each {|brand| subtup &lt;&lt; ["brand = ?", brand]}
+  tup &lt;&lt; subtup
+end
+</code></pre>
+
+<p>Or, in a smarter way by utilizing <code>#add_each</code> method:</p>
+
+<pre><code>tup = SmartTuple.new(" AND ")
+tup &lt;&lt; SmartTuple.new(" OR ").add_each(params[:brands]) {|v| ["brand = ?", v]} if params[:brands].present?
+</code></pre>
+
+<p>The final query:</p>
+
+<pre><code>Phone.find(:all, {:conditions =&gt; [SmartTuple.new(" AND "),
+  (SmartTuple.new(" OR ").add_each(params[:brands]) {|v| ["brand = ?", v]} if params[:brands].present?),
+  (["min_price &gt;= ?", params[:min_price]] if params[:min_price].present?),
+  (["max_price &lt;= ?", params[:max_price]] if params[:max_price].present?),
+  (SmartTuple.new(" OR ").add_each(params[:colors]) {|v| ["color = ?", v]} if params[:colors].present?),
+].sum.compile})
+</code></pre>
+
+<blockquote>
+  <p>NOTE: In the above sample I’ve used <code>Array#sum</code> (available in ActiveSupport) instead of <code>+</code> to add statements to the tuple. I prefer to write it like this since it allows to comment and swap lines without breaking the syntax.</p>
+</blockquote>
+
+<blockquote>
+  <p>NOTE: Recommended Rails 3 usage is:</p>
+
+  <pre><code>Phone.where(...)      # Pass a compiled SmartTuple object in place of `...`.
+</code></pre>
+</blockquote>
+
+<p>Checking out <code>params</code> and <code>:conditions</code>:</p>
+
+<pre><code>p: {:brands=&gt;["Nokia"], :max_price=&gt;300}
+c: ["brand = ? AND max_price &lt;= ?", "Nokia", 300]
+
+p: {:brands=&gt;["Nokia", "Motorola"], :max_price=&gt;300}
+c: ["(brand = ? OR brand = ?) AND max_price &lt;= ?", "Nokia", "Motorola", 300]
+     ^--                    ^-- note the auto brackets
+
+p: {:brands=&gt;["Nokia", "Motorola"], :max_price=&gt;300, :colors=&gt;["Black"]}
+c: ["(brand = ? OR brand = ?) AND max_price &lt;= ? AND color = ?", "Nokia", "Motorola", 300, "Black"]
+
+p: {:brands=&gt;["Nokia", "Motorola"], :colors=&gt;["Black", "Silver", "Pink"]}
+c: ["(brand = ? OR brand = ?) AND (color = ? OR color = ? OR color = ?)", "Nokia", "Motorola", "Black", "Silver", "Pink"]
+</code></pre>
+
+<p>That’s the end of our tutorial. Hope now you’ve got an idea of what SmartTuple is.</p>
+
+<h2 id="api-summary">API Summary</h2>
+
+<p>Here’s a brief cheatsheet, which outlines the main SmartTuple features.</p>
+
+<h3 id="appending-statements">Appending Statements</h3>
+
+<pre><code># Array.
+tup &lt;&lt; ["brand = ?", "Nokia"]
+tup &lt;&lt; ["brand = ? AND color = ?", "Nokia", "Black"]
+
+# Hash.
+tup &lt;&lt; {:brand =&gt; "Nokia"}
+tup &lt;&lt; {:brand =&gt; "Nokia", :color =&gt; "Black"}
+
+# Another SmartTuple.
+tup &lt;&lt; other_tuple
+
+# String. Generally NOT recommended.
+tup &lt;&lt; "min_price &gt;= 75"
+</code></pre>
+
+<p>Appending empty or blank (where appropriate) statements has no effect on the receiver:</p>
+
+<pre><code>tup &lt;&lt; nil
+tup &lt;&lt; []
+tup &lt;&lt; {}
+tup &lt;&lt; an_empty_tuple
+tup &lt;&lt; ""
+tup &lt;&lt; "  "     # Will be treated as blank if ActiveSupport is on.
+</code></pre>
+
+<p>Another way to append something is to use <code>+</code>.</p>
+
+<pre><code>tup = SmartTuple.new(" AND ") + {:brand =&gt; "Nokia"} + ["max_price &lt;= ?", 300]
+</code></pre>
+
+<p>Appending one statement per each collection item is easy through <code>#add_each</code>:</p>
+
+<pre><code>tup.add_each(["Nokia", "Motorola"]) {|v| ["brand = ?", v]}
+</code></pre>
+
+<p>The latter can be made conditional. Remember, appending <code>nil</code> has no effect on the receiving tuple, which gives us freedom to use conditions whenever we want to:</p>
+
+<pre><code>tup.add_each(["Nokia", "Motorola"]) do |v|
+  ["brand = ?", v] if v =~ /^Moto/
+end
+</code></pre>
+
+<h3 id="bracketing-the-statements-always-never-and-auto">Bracketing the Statements: Always, Never and Auto</h3>
+
+<p><em>This chapter still has to be written.</em></p>
+
+<pre><code>tup = SmartTuple.new(" AND ")
+tup.brackets
+=&gt; :auto
+
+tup.brackets = true
+tup.brackets = false
+tup.brackets = :auto
+</code></pre>
+
+<h3 id="clearing">Clearing</h3>
+
+<p>To put tuple into its initial state, do a:</p>
+
+<pre><code>tup.clear
+</code></pre>
+
+<h3 id="compiling">Compiling</h3>
+
+<p>Compiling is converting the tuple into something suitable for use as <code>:conditions</code> of an ActiveRecord call.</p>
+
+<p>It’s as straight as:</p>
+
+<pre><code>tup.compile
+tup.to_a        # An alias, does the same.
+
+# Go fetch!
+Phone.find(:all, :conditions =&gt; tup.compile)    # Rails 2
+Phone.where(tup.compile)                        # Rails 3
+</code></pre>
+
+<h3 id="contents-and-size">Contents and Size</h3>
+
+<p>You can examine tuple’s state with methods often found in other Ruby classes: <code>#empty?</code>, <code>#size</code>, and attribute accessors <code>#statements</code> and <code>#args</code>.</p>
+
+<pre><code>tup = SmartTuple.new(" AND ")
+tup.empty?
+=&gt; true
+tup.size
+=&gt; 0
+
+tup &lt;&lt; ["brand = ?", "Nokia"]
+tup.empty?
+=&gt; false
+tup.size
+=&gt; 1
+
+tup &lt;&lt; ["max_price &gt;= ?", 300]
+tup.size
+=&gt; 2
+
+tup.statements
+=&gt; ["brand = ?", "max_price &gt;= ?"]
+tup.args
+=&gt; ["Nokia", 300]
+</code></pre>
+
+<h2 id="feedback">Feedback</h2>
+
+<p>Send bug reports, suggestions and criticisms through <a href="http://github.com/dadooda/smart_tuple">project’s page on GitHub</a>.</p>
+
+<p>Licensed under the MIT License.</p>
